@@ -7,6 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logger/logger.dart';
 
+/// 앱에서 지원하는 언어 코드와 표시 이름을 담은 Map
+final Map<String, String> supportedLanguages = {
+  'ko': '한국어',
+  'en': 'English',
+  'ja': '日本語',
+  'zh': '中文',
+  'es': 'Español',
+};
+
 final logger = Logger();
 
 void main() async {
@@ -46,12 +55,15 @@ class CommandmentCardPage extends StatefulWidget {
 }
 
 class _CommandmentCardPageState extends State<CommandmentCardPage> {
-  int currentCardIndex = 0;
-  List<Map<String, dynamic>> cards = [];
+  List<CardModel> _cards = [];
+  int _currentCardIndex = 0;
   TextEditingController memoController = TextEditingController();
   List<Map<String, dynamic>> memos = [];
   bool isLoading = true;
   String? errorMessage;
+
+  /// 사용자가 선택한 언어 코드 (기본값: 'ko')
+  String selectedLang = 'ko';
 
   @override
   void initState() {
@@ -67,9 +79,38 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
         errorMessage = null;
       });
 
+      final selectFields = [
+        'id',
+        'title_$selectedLang',
+        'story_$selectedLang',
+        'q1_$selectedLang',
+        'q2_$selectedLang',
+        'title_ko',
+        'story_ko',
+        'q1_ko',
+        'q2_ko',
+        'title_en',
+        'story_en',
+        'q1_en',
+        'q2_en',
+        'title_ja',
+        'story_ja',
+        'q1_ja',
+        'q2_ja',
+        'title_zh',
+        'story_zh',
+        'q1_zh',
+        'q2_zh',
+        'title_es',
+        'story_es',
+        'q1_es',
+        'q2_es',
+      ].join(', ');
+
       final response = await Supabase.instance.client
-          .from('cards')
-          .select()
+          .from('multilang_cards')
+          .select(selectFields)
+          .order('id')
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {
@@ -79,13 +120,15 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
 
       logger.i('Fetched ${response.length} cards from Supabase');
       final fetchedCards = List<Map<String, dynamic>>.from(response);
+      final cardModels =
+          fetchedCards.map((json) => CardModel.fromJson(json)).toList();
 
-      if (fetchedCards.isNotEmpty) {
+      if (cardModels.isNotEmpty) {
         final random = Random();
-        final randomIndex = random.nextInt(fetchedCards.length);
+        final randomIndex = random.nextInt(cardModels.length);
         setState(() {
-          cards = fetchedCards;
-          currentCardIndex = randomIndex;
+          _cards = cardModels;
+          _currentCardIndex = randomIndex;
           isLoading = false;
         });
       } else {
@@ -106,21 +149,21 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
         }
         isLoading = false;
       });
-      logger.e('Error fetching cards: $e');
+      print('Error fetching cards: $e');
     }
   }
 
   Future<void> saveMemo() async {
     final prefs = await SharedPreferences.getInstance();
     final memo = memoController.text.trim();
-    if (memo.isNotEmpty && cards.isNotEmpty) {
-      final card = cards[currentCardIndex];
+    if (memo.isNotEmpty && _cards.isNotEmpty) {
+      final card = _cards[_currentCardIndex];
       final now = DateTime.now(); // ✅ 추가
       final formattedDate =
           "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
       final newMemo = {
-        'id': card['id'],
-        'title': card['title'],
+        'id': card.id,
+        'title': card.getTitle(selectedLang),
         'memo': memo,
         'date': formattedDate,
       };
@@ -267,16 +310,15 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
       );
     }
 
-    if (cards.isEmpty) {
+    if (_cards.isEmpty) {
       return const Scaffold(
         backgroundColor: Color(0xffdcd0f7),
         body: Center(child: Text('카드를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.')),
       );
     }
 
-    final card = cards[currentCardIndex];
-    final questions =
-        card['questions'].map<String>((e) => e.toString()).toList();
+    final card = _cards[_currentCardIndex];
+    final questions = card.getQuestions(selectedLang);
 
     return Scaffold(
       backgroundColor: const Color(0xfffdf8ff),
@@ -294,6 +336,32 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              /// 언어 선택 드롭다운
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  DropdownButton<String>(
+                    value: selectedLang,
+                    items:
+                        supportedLanguages.entries
+                            .map(
+                              (entry) => DropdownMenuItem<String>(
+                                value: entry.key,
+                                child: Text(entry.value),
+                              ),
+                            )
+                            .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedLang = value;
+                        });
+                        fetchCardsFromSupabase();
+                      }
+                    },
+                  ),
+                ],
+              ),
               const Text(
                 '🎯 오늘의 실천 제목',
                 style: TextStyle(
@@ -304,7 +372,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                card['title'],
+                card.getTitle(selectedLang),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -320,7 +388,10 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(card['story'], style: const TextStyle(fontSize: 16)),
+              Text(
+                card.getStory(selectedLang),
+                style: const TextStyle(fontSize: 16),
+              ),
               const SizedBox(height: 16),
               const Text(
                 '❓ 실천을 위한 질문',
@@ -360,7 +431,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                     onPressed: () {
                       setState(() {
                         final random = Random();
-                        currentCardIndex = random.nextInt(cards.length);
+                        _currentCardIndex = random.nextInt(_cards.length);
                       });
                     },
                     style: ElevatedButton.styleFrom(
@@ -382,5 +453,156 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
         ),
       ),
     );
+  }
+}
+
+class CardModel {
+  final int id;
+  final String? title_ko, story_ko, q1_ko, q2_ko;
+  final String? title_en, story_en, q1_en, q2_en;
+  final String? title_ja, story_ja, q1_ja, q2_ja;
+  final String? title_zh, story_zh, q1_zh, q2_zh;
+  final String? title_es, story_es, q1_es, q2_es;
+
+  CardModel({
+    required this.id,
+    this.title_ko,
+    this.story_ko,
+    this.q1_ko,
+    this.q2_ko,
+    this.title_en,
+    this.story_en,
+    this.q1_en,
+    this.q2_en,
+    this.title_ja,
+    this.story_ja,
+    this.q1_ja,
+    this.q2_ja,
+    this.title_zh,
+    this.story_zh,
+    this.q1_zh,
+    this.q2_zh,
+    this.title_es,
+    this.story_es,
+    this.q1_es,
+    this.q2_es,
+  });
+
+  factory CardModel.fromJson(Map<String, dynamic> json) {
+    return CardModel(
+      id: json['id'] as int,
+      title_ko: json['title_ko']?.toString(),
+      story_ko: json['story_ko']?.toString(),
+      q1_ko: json['q1_ko']?.toString(),
+      q2_ko: json['q2_ko']?.toString(),
+      title_en: json['title_en']?.toString(),
+      story_en: json['story_en']?.toString(),
+      q1_en: json['q1_en']?.toString(),
+      q2_en: json['q2_en']?.toString(),
+      title_ja: json['title_ja']?.toString(),
+      story_ja: json['story_ja']?.toString(),
+      q1_ja: json['q1_ja']?.toString(),
+      q2_ja: json['q2_ja']?.toString(),
+      title_zh: json['title_zh']?.toString(),
+      story_zh: json['story_zh']?.toString(),
+      q1_zh: json['q1_zh']?.toString(),
+      q2_zh: json['q2_zh']?.toString(),
+      title_es: json['title_es']?.toString(),
+      story_es: json['story_es']?.toString(),
+      q1_es: json['q1_es']?.toString(),
+      q2_es: json['q2_es']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title_ko': title_ko,
+    'story_ko': story_ko,
+    'q1_ko': q1_ko,
+    'q2_ko': q2_ko,
+    'title_en': title_en,
+    'story_en': story_en,
+    'q1_en': q1_en,
+    'q2_en': q2_en,
+    'title_ja': title_ja,
+    'story_ja': story_ja,
+    'q1_ja': q1_ja,
+    'q2_ja': q2_ja,
+    'title_zh': title_zh,
+    'story_zh': story_zh,
+    'q1_zh': q1_zh,
+    'q2_zh': q2_zh,
+    'title_es': title_es,
+    'story_es': story_es,
+    'q1_es': q1_es,
+    'q2_es': q2_es,
+  };
+
+  String getTitle(String langCode) {
+    switch (langCode) {
+      case 'ko':
+        return title_ko ?? '';
+      case 'en':
+        return title_en ?? '';
+      case 'ja':
+        return title_ja ?? '';
+      case 'zh':
+        return title_zh ?? '';
+      case 'es':
+        return title_es ?? '';
+      default:
+        return '';
+    }
+  }
+
+  String getStory(String langCode) {
+    switch (langCode) {
+      case 'ko':
+        return story_ko ?? '';
+      case 'en':
+        return story_en ?? '';
+      case 'ja':
+        return story_ja ?? '';
+      case 'zh':
+        return story_zh ?? '';
+      case 'es':
+        return story_es ?? '';
+      default:
+        return '';
+    }
+  }
+
+  List<String> getQuestions(String langCode) {
+    String? q1;
+    String? q2;
+    switch (langCode) {
+      case 'ko':
+        q1 = q1_ko;
+        q2 = q2_ko;
+        break;
+      case 'en':
+        q1 = q1_en;
+        q2 = q2_en;
+        break;
+      case 'ja':
+        q1 = q1_ja;
+        q2 = q2_ja;
+        break;
+      case 'zh':
+        q1 = q1_zh;
+        q2 = q2_zh;
+        break;
+      case 'es':
+        q1 = q1_es;
+        q2 = q2_es;
+        break;
+      default:
+        q1 = null;
+        q2 = null;
+    }
+    return [q1, q2]
+        .where((q) => q != null && q.toString().trim().isNotEmpty)
+        .map((q) => q!.toString())
+        .toList();
   }
 }
