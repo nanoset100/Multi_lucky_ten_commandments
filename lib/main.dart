@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter/services.dart';
+import 'reminder_service.dart';
+import 'reminder_setting_page.dart';
 
 /// 앱에서 지원하는 언어 코드와 표시 이름을 담은 Map
 final Map<String, String> supportedLanguages = {
@@ -65,12 +68,65 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
   /// 사용자가 선택한 언어 코드 (기본값: 'ko')
   String selectedLang = 'ko';
 
+  Map<String, dynamic>? uiLabels;
+  String detectedLang = 'ko';
+  bool labelsLoaded = false;
+
   @override
   void initState() {
     super.initState();
+    _loadLabelsAndDetectLocale();
     fetchCardsFromSupabase();
     loadMemos();
+    // 앱 접속 추적
+    ReminderService.instance.trackAppAccess();
   }
+
+  Future<void> _loadLabelsAndDetectLocale() async {
+    try {
+      final jsonString = await rootBundle.loadString(
+        'assets/lucky_ten_ui_labels.json',
+      );
+      final Map<String, dynamic> labels = json.decode(jsonString);
+
+      // 비동기 작업에서 BuildContext 사용을 피하기 위해
+      // 컨텍스트가 여전히 유효한지 확인
+      if (!mounted) return;
+
+      // Locale 감지 (플랫폼 Locale, selectedLang, fallback)
+      String lang = View.of(context).platformDispatcher.locale.languageCode;
+      if (!labels.containsKey(lang)) {
+        lang = 'ko';
+      }
+
+      setState(() {
+        uiLabels = labels;
+        detectedLang = lang;
+        labelsLoaded = true;
+        selectedLang = lang; // 앱 내 언어 선택도 동기화
+      });
+    } catch (e) {
+      logger.e('Error loading labels: $e');
+      if (mounted) {
+        setState(() {
+          labelsLoaded = true; // 에러가 있어도 로딩 완료 표시
+          detectedLang = 'ko';
+          selectedLang = 'ko';
+        });
+      }
+    }
+  }
+
+  // 언어 변경 메서드는 나중에 사용할 예정이므로 주석 처리합니다
+  /*
+  void _changeLanguage(String lang) {
+    setState(() {
+      detectedLang = lang;
+      selectedLang = lang;
+    });
+    fetchCardsFromSupabase();
+  }
+  */
 
   Future<void> fetchCardsFromSupabase() async {
     try {
@@ -149,7 +205,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
         }
         isLoading = false;
       });
-      print('Error fetching cards: $e');
+      logger.e('Error fetching cards: $e');
     }
   }
 
@@ -194,11 +250,12 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
   }
 
   void showAllMemos() {
+    final labels = uiLabels?[detectedLang] as Map<String, dynamic>?;
     showDialog(
       context: context,
       builder:
           (_) => AlertDialog(
-            title: const Text('📚 전체 메모 보기'),
+            title: Text(labels?['view_all_memo'] ?? ''),
             content: SizedBox(
               width: double.maxFinite,
               child: ListView.builder(
@@ -207,7 +264,10 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                   final memo = memos.reversed.toList()[index];
                   final String title = memo['title'] ?? '';
                   final String content = memo['memo'] ?? '';
-                  final String date = memo['date']?.substring(0, 10) ?? '날짜 없음';
+                  final String date =
+                      memo['date']?.substring(0, 10) ??
+                      labels?['date_none'] ??
+                      '날짜 없음';
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -241,9 +301,9 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  '닫기',
-                  style: TextStyle(color: Colors.deepPurple),
+                child: Text(
+                  labels?['close'] ?? '',
+                  style: const TextStyle(color: Colors.deepPurple),
                 ),
               ),
             ],
@@ -253,19 +313,24 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!labelsLoaded || uiLabels == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final labels = uiLabels![selectedLang] as Map<String, dynamic>;
+
     if (isLoading) {
       return Scaffold(
         backgroundColor: const Color(0xffdcd0f7),
-        body: const Center(
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('카드를 불러오는 중입니다...', style: TextStyle(fontSize: 16)),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(labels['loading_cards'] ?? '로딩 중...'),
               Text(
-                '잠시만 기다려주세요.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                labels['please_wait'] ?? '잠시만 기다려주세요.',
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ],
           ),
@@ -293,7 +358,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                 ElevatedButton.icon(
                   onPressed: fetchCardsFromSupabase,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('다시 시도'),
+                  label: Text(labels['retry'] ?? '다시 시도'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
@@ -311,9 +376,11 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
     }
 
     if (_cards.isEmpty) {
-      return const Scaffold(
-        backgroundColor: Color(0xffdcd0f7),
-        body: Center(child: Text('카드를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.')),
+      return Scaffold(
+        backgroundColor: const Color(0xffdcd0f7),
+        body: Center(
+          child: Text(labels['no_cards'] ?? '카드를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.'),
+        ),
       );
     }
 
@@ -323,13 +390,24 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
     return Scaffold(
       backgroundColor: const Color(0xfffdf8ff),
       appBar: AppBar(
-        title: const Text(
-          '행운의 십계명 카드',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(labels['page_title'] ?? ''),
         centerTitle: true,
         backgroundColor: const Color(0xffdcd0f7),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.insights),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ReminderSettingPage(),
+                ),
+              );
+            },
+            tooltip: '나의 십계명 기록',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -355,6 +433,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                       if (value != null) {
                         setState(() {
                           selectedLang = value;
+                          detectedLang = value;
                         });
                         fetchCardsFromSupabase();
                       }
@@ -362,9 +441,9 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                   ),
                 ],
               ),
-              const Text(
-                '🎯 오늘의 실천 제목',
-                style: TextStyle(
+              Text(
+                labels['today_theme'] ?? '🎯 오늘의 실천 제목',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
@@ -372,16 +451,18 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                card.getTitle(selectedLang),
+                card.getTitle(selectedLang).isNotEmpty
+                    ? card.getTitle(selectedLang)
+                    : labels['no_cards'] ?? '제목 없음',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                '📖 오늘의 스토리',
-                style: TextStyle(
+              Text(
+                labels['today_story'] ?? '오늘의 스토리',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
@@ -389,28 +470,33 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                card.getStory(selectedLang),
+                card.getStory(selectedLang).isNotEmpty
+                    ? card.getStory(selectedLang)
+                    : labels['no_cards'] ?? '스토리 없음',
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 16),
-              const Text(
-                '❓ 실천을 위한 질문',
-                style: TextStyle(
+              Text(
+                labels['today_question'] ?? '실천을 위한 질문',
+                style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              ...questions.map((q) => Text('• $q')).toList(),
+              ...questions.map((q) => Text('• $q')),
               const SizedBox(height: 16),
-              const Text(
-                '✍️ 메모하기',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              Text(
+                labels['memo_title'] ?? '메모하기',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
               TextField(
                 controller: memoController,
-                decoration: const InputDecoration(
-                  hintText: '오늘의 실천을 기록해보세요',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: labels['memo_placeholder'] ?? '오늘의 실천을 기록해보세요',
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 2,
               ),
@@ -421,30 +507,41 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('📂 메모 저장'),
+                child: Text(labels['save_memo'] ?? '메모 저장'),
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        final random = Random();
-                        _currentCardIndex = random.nextInt(_cards.length);
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple.shade100,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            final random = Random();
+                            _currentCardIndex = random.nextInt(_cards.length);
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple.shade100,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(labels['draw_new_card'] ?? '🔄 새 카드'),
+                      ),
                     ),
-                    child: const Text('🔄 새 카드 뽑기'),
                   ),
-                  ElevatedButton(
-                    onPressed: showAllMemos,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple.shade100,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: ElevatedButton(
+                        onPressed: showAllMemos,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple.shade100,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(labels['view_my_memo'] ?? '📂 내 메모'),
+                      ),
                     ),
-                    child: const Text('📁 내 메모 보기'),
                   ),
                 ],
               ),
