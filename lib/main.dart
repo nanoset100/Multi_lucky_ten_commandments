@@ -31,6 +31,10 @@ void main() async {
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
     );
     logger.i('Supabase initialized successfully');
+
+    // ReminderService 초기화
+    await ReminderService.instance.init();
+    logger.i('ReminderService initialized successfully');
   } catch (e) {
     logger.e('초기화 중 오류 발생: $e');
   }
@@ -78,8 +82,6 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
     _loadLabelsAndDetectLocale();
     fetchCardsFromSupabase();
     loadMemos();
-    // 앱 접속 추적
-    ReminderService.instance.trackAppAccess();
   }
 
   Future<void> _loadLabelsAndDetectLocale() async {
@@ -401,7 +403,9 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ReminderSettingPage(),
+                  builder:
+                      (context) =>
+                          ReminderSettingPage(selectedLanguage: selectedLang),
                 ),
               );
             },

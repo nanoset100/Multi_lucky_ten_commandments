@@ -17,7 +17,19 @@
     "no_cards": "카드를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
     "date_none": "날짜 없음",
     "draw_new_card": "🔄 새 카드",
-    "view_my_memo": "📂 내 메모"
+    "view_my_memo": "📂 내 메모",
+    "reminder_page_title": "나의 십계명 기록",
+    "stats_title": "나의 십계명 기록",
+    "streak_days": "연속 접속일",
+    "today_access": "오늘 접속",
+    "total_access": "전체 접속",
+    "daily_check_time": "매일 확인 시간 설정",
+    "daily_check_description": "매일 이 시간이 되면 십계명 카드를 확인하는 것을 잊지 마세요.",
+    "check_time": "확인 시간",
+    "usage_tips": "사용 팁",
+    "tip_1": "매일 꾸준히 접속하면 연속 접속일이 늘어납니다.",
+    "tip_2": "설정한 시간에 알림이 오지 않더라도 매일 앱을 열어 십계명을 확인하세요.",
+    "tip_3": "십계명 카드 내용을 메모해두면 나중에 모아볼 수 있습니다."
   },
   "en": {
     "page_title": "Lucky Ten Commandments Card",
@@ -37,7 +49,19 @@
     "no_cards": "Unable to load cards. Please try again later.",
     "date_none": "No date",
     "draw_new_card": "🔄 New Card",
-    "view_my_memo": "📂 My Memo"
+    "view_my_memo": "📂 My Memo",
+    "reminder_page_title": "My Commandments Record",
+    "stats_title": "My Commandments Record",
+    "streak_days": "Streak Days",
+    "today_access": "Today's Visits",
+    "total_access": "Total Visits",
+    "daily_check_time": "Set Daily Check Time",
+    "daily_check_description": "Remember to check the commandment card at this time every day.",
+    "check_time": "Check Time",
+    "usage_tips": "Usage Tips",
+    "tip_1": "Visit daily to increase your streak count.",
+    "tip_2": "Open the app daily to check commandments even if you don't receive notifications.",
+    "tip_3": "You can save memos of card content to view later."
   },
   "ja": {
     "page_title": "ラッキー十戒カード",
@@ -57,7 +81,19 @@
     "no_cards": "カードを読み込めません。しばらくしてから再度お試しください。",
     "date_none": "日付なし",
     "draw_new_card": "🔄 カード引く",
-    "view_my_memo": "📂 メモ見る"
+    "view_my_memo": "📂 メモ見る",
+    "reminder_page_title": "私の十戒記録",
+    "stats_title": "私の十戒記録",
+    "streak_days": "連続訪問日",
+    "today_access": "今日の訪問",
+    "total_access": "総訪問回数",
+    "daily_check_time": "毎日の確認時間設定",
+    "daily_check_description": "毎日この時間に十戒カードを確認することを忘れないでください。",
+    "check_time": "確認時間",
+    "usage_tips": "使用ヒント",
+    "tip_1": "毎日アクセスすると連続訪問日数が増えます。",
+    "tip_2": "通知が来なくても毎日アプリを開いて十戒を確認してください。",
+    "tip_3": "十戒カードの内容をメモしておくと後で確認できます。"
   },
   "zh": {
     "page_title": "幸运十诫卡片",
@@ -77,7 +113,19 @@
     "no_cards": "无法加载卡片。请稍后再试。",
     "date_none": "无日期",
     "draw_new_card": "🔄 抽新卡",
-    "view_my_memo": "📂 查看笔记"
+    "view_my_memo": "📂 查看笔记",
+    "reminder_page_title": "我的十诫记录",
+    "stats_title": "我的十诫记录",
+    "streak_days": "连续访问天数",
+    "today_access": "今日访问",
+    "total_access": "总访问次数",
+    "daily_check_time": "设置每日查看时间",
+    "daily_check_description": "请记得每天在这个时间查看十诫卡片。",
+    "check_time": "查看时间",
+    "usage_tips": "使用提示",
+    "tip_1": "每天坚持访问可增加连续访问天数。",
+    "tip_2": "即使没收到提醒，也请每天打开应用查看十诫。",
+    "tip_3": "记录十诫卡片内容，方便日后查看。"
   },
   "es": {
     "page_title": "Tarjeta de los Diez Mandamientos de la Suerte",
@@ -97,6 +145,18 @@
     "no_cards": "No se pueden cargar las tarjetas. Por favor, inténtalo de nuevo más tarde.",
     "date_none": "Sin fecha",
     "draw_new_card": "🔄 Nueva Tarjeta",
-    "view_my_memo": "📂 Ver Memo"
+    "view_my_memo": "📂 Ver Memo",
+    "reminder_page_title": "Mi Registro de Mandamientos",
+    "stats_title": "Mi Registro de Mandamientos",
+    "streak_days": "Días Consecutivos",
+    "today_access": "Visitas Hoy",
+    "total_access": "Visitas Totales",
+    "daily_check_time": "Configurar Hora de Verificación Diaria",
+    "daily_check_description": "Recuerde revisar la tarjeta de mandamientos a esta hora todos los días.",
+    "check_time": "Hora de Verificación",
+    "usage_tips": "Consejos de Uso",
+    "tip_1": "Visite diariamente para aumentar su racha de días consecutivos.",
+    "tip_2": "Abra la aplicación diariamente para verificar los mandamientos, incluso si no recibe notificaciones.",
+    "tip_3": "Puede guardar notas del contenido de las tarjetas para verlas más tarde."
   }
 } 
