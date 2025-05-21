@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:flutter/services.dart';
 import 'reminder_service.dart';
 import 'reminder_setting_page.dart';
+import 'community_memo_page.dart';
 
 /// 앱에서 지원하는 언어 코드와 표시 이름을 담은 Map
 final Map<String, String> supportedLanguages = {
@@ -232,6 +233,34 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
     }
   }
 
+  Future<void> saveMemoAndShare(String content, int cardId) async {
+    final timestamp = DateTime.now().toIso8601String();
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. 로컬 저장
+    await prefs.setString('memo_$cardId', content);
+
+    // 2. Supabase에 자동 업로드
+    await Supabase.instance.client.from('community_memos').insert({
+      'content': content,
+      'created_at': timestamp,
+      'card_id': cardId,
+      'source': '행운십계명',
+      'language': selectedLang,
+    });
+
+    // 알림
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            uiLabels?[selectedLang]?['memo_shared'] ?? '메모가 저장되고 공유되었습니다.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> loadMemos() async {
     final prefs = await SharedPreferences.getInstance();
     final memoString = prefs.getString('memos');
@@ -411,6 +440,20 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
             },
             tooltip: '나의 십계명 기록',
           ),
+          IconButton(
+            icon: const Icon(Icons.forum),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) =>
+                          CommunityMemoPage(selectedLanguage: selectedLang),
+                ),
+              );
+            },
+            tooltip: '커뮤니티 메모',
+          ),
         ],
       ),
       body: Padding(
@@ -506,7 +549,15 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               ),
               const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: saveMemo,
+                onPressed: () {
+                  final memoText = memoController.text.trim();
+                  if (memoText.isNotEmpty && _cards.isNotEmpty) {
+                    final cardId = _cards[_currentCardIndex].id;
+                    saveMemo().then((_) {
+                      saveMemoAndShare(memoText, cardId);
+                    });
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
@@ -548,6 +599,24 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              CommunityMemoPage(selectedLanguage: selectedLang),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple.shade200,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(labels['community_memos'] ?? '👥 커뮤니티 메모'),
               ),
             ],
           ),
