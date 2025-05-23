@@ -601,7 +601,14 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              ElevatedButton(
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(180, 45), // 가로폭을 넉넉하게
+                  backgroundColor: Colors.purple.shade200,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -612,11 +619,18 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple.shade200,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.people_alt, size: 20, color: Colors.black),
+                    const SizedBox(width: 6),
+                    Text(
+                      labels['community_memos'] ?? '커뮤니티 메모',
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ],
                 ),
-                child: Text(labels['community_memos'] ?? '👥 커뮤니티 메모'),
               ),
             ],
           ),

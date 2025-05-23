@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math' as math;
 
 class CommunityMemoPage extends StatefulWidget {
   final String selectedLanguage;
@@ -14,11 +16,28 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
   bool isLoading = true;
   List<Map<String, dynamic>> communityMemos = [];
   String? errorMessage;
+  final supabase = Supabase.instance.client;
+  String? deviceId;
+  Map<int, bool> likedMemos = {};
+  Map<int, int> likeCounts = {};
 
   @override
   void initState() {
     super.initState();
+    _initDeviceId();
     fetchCommunityMemos();
+  }
+
+  Future<void> _initDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? id = prefs.getString('device_id');
+    if (id == null) {
+      id = 'device-${math.Random().nextInt(1000000)}';
+      await prefs.setString('device_id', id);
+    }
+    setState(() {
+      deviceId = id;
+    });
   }
 
   Future<void> fetchCommunityMemos() async {
@@ -28,7 +47,7 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
         errorMessage = null;
       });
 
-      final response = await Supabase.instance.client
+      final response = await supabase
           .from('community_memos')
           .select()
           .eq('language', widget.selectedLanguage)
@@ -39,6 +58,11 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
         communityMemos = List<Map<String, dynamic>>.from(response);
         isLoading = false;
       });
+
+      // 메모를 가져온 후 좋아요 상태도 불러옵니다
+      if (deviceId != null) {
+        loadAllLikeStatus();
+      }
     } catch (e) {
       setState(() {
         errorMessage = '메모를 불러오는 중 오류가 발생했습니다.';
@@ -47,8 +71,74 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
     }
   }
 
+  Future<void> loadAllLikeStatus() async {
+    if (deviceId == null || communityMemos.isEmpty) return;
+
+    for (var memo in communityMemos) {
+      final memoId = memo['id'];
+      await loadLikeStatus(memoId);
+    }
+  }
+
+  Future<void> loadLikeStatus(int memoId) async {
+    if (deviceId == null) return;
+
+    bool isLiked = await hasLiked(memoId, deviceId!);
+    int likeCount = await getLikeCount(memoId);
+
+    setState(() {
+      likedMemos[memoId] = isLiked;
+      likeCounts[memoId] = likeCount;
+    });
+  }
+
+  Future<bool> hasLiked(int memoId, String deviceId) async {
+    final response = await supabase
+        .from('memo_likes')
+        .select()
+        .eq('memo_id', memoId)
+        .eq('device_id', deviceId);
+
+    return response.isNotEmpty;
+  }
+
+  Future<int> getLikeCount(int memoId) async {
+    final response = await supabase
+        .from('memo_likes')
+        .select()
+        .eq('memo_id', memoId);
+
+    return response.length;
+  }
+
+  Future<void> toggleLike(int memoId, String deviceId) async {
+    final response = await supabase
+        .from('memo_likes')
+        .select()
+        .eq('memo_id', memoId)
+        .eq('device_id', deviceId);
+
+    if (response.isEmpty) {
+      // 좋아요 등록
+      await supabase.from('memo_likes').insert({
+        'memo_id': memoId,
+        'device_id': deviceId,
+      });
+    } else {
+      // 좋아요 취소
+      await supabase
+          .from('memo_likes')
+          .delete()
+          .eq('memo_id', memoId)
+          .eq('device_id', deviceId);
+    }
+
+    // 상태 업데이트
+    await loadLikeStatus(memoId);
+  }
+
   Future<List<Map<String, dynamic>>> fetchComments(int memoId) async {
-    final comments = await Supabase.instance.client
+    final comments = await supabase
         .from('memo_comments')
         .select()
         .eq('memo_id', memoId)
@@ -78,13 +168,11 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
                 onPressed: () async {
                   final text = controller.text.trim();
                   if (text.isNotEmpty) {
-                    await Supabase.instance.client
-                        .from('memo_comments')
-                        .insert({
-                          'memo_id': memoId,
-                          'content': text,
-                          'created_at': DateTime.now().toIso8601String(),
-                        });
+                    await supabase.from('memo_comments').insert({
+                      'memo_id': memoId,
+                      'content': text,
+                      'created_at': DateTime.now().toIso8601String(),
+                    });
                     Navigator.pop(context);
                     setState(() {}); // 댓글 새로고침용
                   }
@@ -122,6 +210,10 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
                   ),
                   itemBuilder: (context, index) {
                     final memo = communityMemos[index];
+                    final int memoId = memo['id'];
+                    final bool isLiked = likedMemos[memoId] ?? false;
+                    final int likeCount = likeCounts[memoId] ?? 0;
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 4),
                       elevation: 0,
@@ -153,20 +245,58 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
                                     color: Colors.grey,
                                   ),
                                 ),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed:
-                                        () => showCommentInput(memo['id']),
-                                    child: const Text('댓글 달기'),
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 0,
-                                      ),
-                                      minimumSize: const Size(50, 26),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // 좋아요 버튼과 카운터
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            isLiked
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color:
+                                                isLiked
+                                                    ? Colors.red
+                                                    : Colors.grey,
+                                            size: 20,
+                                          ),
+                                          onPressed:
+                                              deviceId == null
+                                                  ? null
+                                                  : () {
+                                                    if (deviceId != null) {
+                                                      toggleLike(
+                                                        memoId,
+                                                        deviceId!,
+                                                      );
+                                                    }
+                                                  },
+                                          constraints: const BoxConstraints(),
+                                          padding: const EdgeInsets.all(8),
+                                        ),
+                                        Text(
+                                          '$likeCount',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ],
                                     ),
-                                  ),
+                                    // 댓글 버튼
+                                    TextButton(
+                                      onPressed:
+                                          () => showCommentInput(memo['id']),
+                                      child: const Text('댓글 달기'),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 0,
+                                        ),
+                                        minimumSize: const Size(50, 26),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
