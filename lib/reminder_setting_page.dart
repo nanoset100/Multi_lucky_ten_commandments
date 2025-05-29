@@ -26,7 +26,6 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
     super.initState();
     // 메인 페이지에서 전달받은 언어 설정 사용
     selectedLang = widget.selectedLanguage;
-    print('ReminderSettingPage - 초기 언어 설정: $selectedLang');
     _loadSettings();
     _loadLabels();
   }
@@ -39,16 +38,10 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
       );
 
       final Map<String, dynamic> labels = json.decode(jsonString);
-      print('ReminderSettingPage - 사용 가능한 언어: ${labels.keys.toList()}');
 
       // 지원되지 않는 언어인 경우 기본값으로 한국어 사용
       if (!labels.containsKey(selectedLang)) {
-        print('ReminderSettingPage - 지원되지 않는 언어: $selectedLang, 기본값(ko)으로 설정');
         selectedLang = 'ko';
-      } else {
-        print(
-          'ReminderSettingPage - 선택된 언어 라벨: ${labels[selectedLang]?.keys.toList()}',
-        );
       }
 
       if (mounted) {
@@ -58,7 +51,6 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
         });
       }
     } catch (e) {
-      print('ReminderSettingPage - 라벨 로딩 오류: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -181,13 +173,6 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
 
     final labels = uiLabels![selectedLang] as Map<String, dynamic>? ?? {};
 
-    // 디버그 정보
-    print('현재 선택된 언어: $selectedLang');
-    print('레이블 로드 여부: ${uiLabels != null}');
-    if (uiLabels != null) {
-      print('지원 언어: ${uiLabels!.keys.toList()}');
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -209,7 +194,7 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
                 if (false) // 개발 중에만 true로 변경
                   Container(
                     padding: const EdgeInsets.all(8),
-                    color: Colors.amber.withOpacity(0.2),
+                    color: Colors.amber.withValues(alpha: 0.2),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -264,7 +249,7 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
                                 ),
                               ],
                             );
-                          }
+                          },
                         ),
                       ],
                     ),
@@ -394,7 +379,7 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
         SizedBox(
           width: 80, // 고정된 너비로 설정하여 오버플로우 방지
           child: Text(
-            label, 
+            label,
             style: const TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
