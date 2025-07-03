@@ -29,7 +29,14 @@
     "usage_tips": "사용 팁",
     "tip_1": "매일 꾸준히 접속하면 연속 접속일이 늘어납니다.",
     "tip_2": "설정한 시간에 알림이 오지 않더라도 매일 앱을 열어 십계명을 확인하세요.",
-    "tip_3": "십계명 카드 내용을 메모해두면 나중에 모아볼 수 있습니다."
+    "tip_3": "십계명 카드 내용을 메모해두면 나중에 모아볼 수 있습니다.",
+    "community_memos": "커뮤니티 메모",
+    "loading_memos": "메모를 불러오는 중...",
+    "error_loading_memos": "메모를 불러오는 중 오류가 발생했습니다.",
+    "no_shared_memos": "공유된 메모가 없습니다.",
+    "add_comment": "댓글 달기",
+    "enter_comment": "댓글을 입력하세요",
+    "submit": "등록"
   },
   "en": {
     "page_title": "Lucky Ten Commandments Card",
@@ -61,7 +68,14 @@
     "usage_tips": "Usage Tips",
     "tip_1": "Visit daily to increase your streak count.",
     "tip_2": "Open the app daily to check commandments even if you don't receive notifications.",
-    "tip_3": "You can save memos of card content to view later."
+    "tip_3": "You can save memos of card content to view later.",
+    "community_memos": "Community Memos",
+    "loading_memos": "Loading memos...",
+    "error_loading_memos": "An error occurred while loading memos.",
+    "no_shared_memos": "No shared memos.",
+    "add_comment": "Add Comment",
+    "enter_comment": "Enter your comment",
+    "submit": "Submit"
   },
   "ja": {
     "page_title": "ラッキー十戒カード",
@@ -93,7 +107,14 @@
     "usage_tips": "使用ヒント",
     "tip_1": "毎日アクセスすると連続訪問日数が増えます。",
     "tip_2": "通知が来なくても毎日アプリを開いて十戒を確認してください。",
-    "tip_3": "十戒カードの内容をメモしておくと後で確認できます。"
+    "tip_3": "十戒カードの内容をメモしておくと後で確認できます。",
+    "community_memos": "コミュニティメモ",
+    "loading_memos": "メモを読み込み中...",
+    "error_loading_memos": "メモの読み込み中にエラーが発生しました。",
+    "no_shared_memos": "共有されたメモがありません。",
+    "add_comment": "コメント追加",
+    "enter_comment": "コメントを入力してください",
+    "submit": "送信"
   },
   "zh": {
     "page_title": "幸运十诫卡片",
@@ -125,7 +146,14 @@
     "usage_tips": "使用提示",
     "tip_1": "每天坚持访问可增加连续访问天数。",
     "tip_2": "即使没收到提醒，也请每天打开应用查看十诫。",
-    "tip_3": "记录十诫卡片内容，方便日后查看。"
+    "tip_3": "记录十诫卡片内容，方便日后查看。",
+    "community_memos": "社区笔记",
+    "loading_memos": "正在加载笔记...",
+    "error_loading_memos": "加载笔记时发生错误。",
+    "no_shared_memos": "没有共享的笔记。",
+    "add_comment": "添加评论",
+    "enter_comment": "请输入评论",
+    "submit": "提交"
   },
   "es": {
     "page_title": "Tarjeta de los Diez Mandamientos de la Suerte",
@@ -157,6 +185,13 @@
     "usage_tips": "Consejos de Uso",
     "tip_1": "Visite diariamente para aumentar su racha de días consecutivos.",
     "tip_2": "Abra la aplicación diariamente para verificar los mandamientos, incluso si no recibe notificaciones.",
-    "tip_3": "Puede guardar notas del contenido de las tarjetas para verlas más tarde."
+    "tip_3": "Puede guardar notas del contenido de las tarjetas para verlas más tarde.",
+    "community_memos": "Memos de la Comunidad",
+    "loading_memos": "Cargando memos...",
+    "error_loading_memos": "Ocurrió un error al cargar los memos.",
+    "no_shared_memos": "No hay memos compartidos.",
+    "add_comment": "Agregar Comentario",
+    "enter_comment": "Ingrese su comentario",
+    "submit": "Enviar"
   }
 } 

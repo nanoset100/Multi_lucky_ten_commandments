@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:math' as math;
+import 'package:flutter/services.dart';
+import 'dart:convert';
 
 class CommunityMemoPage extends StatefulWidget {
   final String selectedLanguage;
@@ -20,32 +21,63 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
   String? deviceId;
   Map<int, bool> likedMemos = {};
   Map<int, int> likeCounts = {};
+  Map<String, dynamic>? uiLabels;
 
   @override
   void initState() {
     super.initState();
+    _loadLabels();
     _initDeviceId();
     fetchCommunityMemos();
+  }
+
+  Future<void> _loadLabels() async {
+    try {
+      final jsonString = await rootBundle.loadString(
+        'assets/lucky_ten_ui_labels.json',
+      );
+      final Map<String, dynamic> labels = json.decode(jsonString);
+
+      if (mounted) {
+        setState(() {
+          uiLabels = labels;
+        });
+      }
+    } catch (e) {
+      // 라벨 로딩 실패 시에도 계속 진행
+      if (mounted) {
+        setState(() {
+          uiLabels = {}; // 빈 맵으로 설정
+        });
+      }
+    }
   }
 
   Future<void> _initDeviceId() async {
     final prefs = await SharedPreferences.getInstance();
     String? id = prefs.getString('device_id');
+
+    // device_id가 없으면 새로 생성
     if (id == null) {
-      id = 'device-${math.Random().nextInt(1000000)}';
+      id = DateTime.now().millisecondsSinceEpoch.toString();
       await prefs.setString('device_id', id);
     }
-    setState(() {
-      deviceId = id;
-    });
+
+    if (mounted) {
+      setState(() {
+        deviceId = id;
+      });
+    }
   }
 
   Future<void> fetchCommunityMemos() async {
     try {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = true;
+          errorMessage = null;
+        });
+      }
 
       final response = await supabase
           .from('community_memos')
@@ -54,20 +86,27 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
           .order('created_at', ascending: false)
           .limit(50);
 
-      setState(() {
-        communityMemos = List<Map<String, dynamic>>.from(response);
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          communityMemos = List<Map<String, dynamic>>.from(response);
+          isLoading = false;
+        });
+      }
 
       // 메모를 가져온 후 좋아요 상태도 불러옵니다
-      if (deviceId != null) {
+      if (deviceId != null && mounted) {
         loadAllLikeStatus();
       }
     } catch (e) {
-      setState(() {
-        errorMessage = '메모를 불러오는 중 오류가 발생했습니다.';
-        isLoading = false;
-      });
+      final labels =
+          uiLabels?[widget.selectedLanguage] as Map<String, dynamic>? ?? {};
+      if (mounted) {
+        setState(() {
+          errorMessage =
+              labels['error_loading_memos'] ?? '메모를 불러오는 중 오류가 발생했습니다.';
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -75,6 +114,7 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
     if (deviceId == null || communityMemos.isEmpty) return;
 
     for (var memo in communityMemos) {
+      if (!mounted) break; // 위젯이 dispose되면 중단
       final memoId = memo['id'];
       await loadLikeStatus(memoId);
     }
@@ -86,10 +126,12 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
     bool isLiked = await hasLiked(memoId, deviceId!);
     int likeCount = await getLikeCount(memoId);
 
-    setState(() {
-      likedMemos[memoId] = isLiked;
-      likeCounts[memoId] = likeCount;
-    });
+    if (mounted) {
+      setState(() {
+        likedMemos[memoId] = isLiked;
+        likeCounts[memoId] = likeCount;
+      });
+    }
   }
 
   Future<bool> hasLiked(int memoId, String deviceId) async {
@@ -133,8 +175,10 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
           .eq('device_id', deviceId);
     }
 
-    // 상태 업데이트
-    await loadLikeStatus(memoId);
+    // 상태 업데이트 - mounted 체크 추가
+    if (mounted) {
+      await loadLikeStatus(memoId);
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchComments(int memoId) async {
@@ -149,6 +193,8 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
 
   void showCommentInput(int memoId) {
     final TextEditingController controller = TextEditingController();
+    final labels =
+        uiLabels?[widget.selectedLanguage] as Map<String, dynamic>? ?? {};
 
     showModalBottomSheet(
       context: context,
@@ -158,10 +204,15 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('댓글 달기', style: TextStyle(fontSize: 16)),
+              Text(
+                labels['add_comment'] ?? '댓글 달기',
+                style: const TextStyle(fontSize: 16),
+              ),
               TextField(
                 controller: controller,
-                decoration: const InputDecoration(hintText: '댓글을 입력하세요'),
+                decoration: InputDecoration(
+                  hintText: labels['enter_comment'] ?? '댓글을 입력하세요',
+                ),
               ),
               const SizedBox(height: 12),
               ElevatedButton(
@@ -173,11 +224,15 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
                       'content': text,
                       'created_at': DateTime.now().toIso8601String(),
                     });
-                    Navigator.pop(context);
-                    setState(() {}); // 댓글 새로고침용
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      if (mounted) {
+                        setState(() {}); // 댓글 새로고침용
+                      }
+                    }
                   }
                 },
-                child: const Text('등록'),
+                child: Text(labels['submit'] ?? '등록'),
               ),
             ],
           ),
@@ -187,19 +242,40 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
   }
 
   @override
+  void dispose() {
+    // 비동기 작업들이 완료되기 전에 위젯이 dispose되는 것을 방지하기 위해
+    // mounted 체크를 통해 메모리 누수를 방지합니다.
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final labels =
+        uiLabels?[widget.selectedLanguage] as Map<String, dynamic>? ?? {};
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('커뮤니티 메모'),
+        title: Text(labels['community_memos'] ?? '커뮤니티 메모'),
         backgroundColor: const Color(0xffdcd0f7),
       ),
       body:
           isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(labels['loading_memos'] ?? '메모를 불러오는 중...'),
+                  ],
+                ),
+              )
               : errorMessage != null
               ? Center(child: Text(errorMessage!))
               : communityMemos.isEmpty
-              ? const Center(child: Text('공유된 메모가 없습니다.'))
+              ? Center(
+                child: Text(labels['no_shared_memos'] ?? '공유된 메모가 없습니다.'),
+              )
               : RefreshIndicator(
                 onRefresh: fetchCommunityMemos,
                 child: ListView.builder(
@@ -287,13 +363,15 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
                                     TextButton(
                                       onPressed:
                                           () => showCommentInput(memo['id']),
-                                      child: const Text('댓글 달기'),
                                       style: TextButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                           vertical: 0,
                                         ),
                                         minimumSize: const Size(50, 26),
+                                      ),
+                                      child: Text(
+                                        labels['add_comment'] ?? '댓글 달기',
                                       ),
                                     ),
                                   ],

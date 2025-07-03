@@ -50,6 +50,7 @@ class LuckyTenCommandmentsApp extends StatelessWidget {
     return MaterialApp(
       title: '행운의 십계명 카드',
       theme: ThemeData(primarySwatch: Colors.deepPurple, fontFamily: 'Roboto'),
+      locale: const Locale('ko', 'KR'), // 한국어 로케일 명시적 설정
       home: const CommandmentCardPage(),
     );
   }
@@ -96,17 +97,20 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
       // 컨텍스트가 여전히 유효한지 확인
       if (!mounted) return;
 
-      // Locale 감지 (플랫폼 Locale, selectedLang, fallback)
-      String lang = View.of(context).platformDispatcher.locale.languageCode;
-      if (!labels.containsKey(lang)) {
-        lang = 'ko';
+      // 먼저 SharedPreferences에서 저장된 언어 설정을 확인
+      final prefs = await SharedPreferences.getInstance();
+      String savedLang = prefs.getString('selected_language') ?? 'ko';
+
+      // 지원되지 않는 언어라면 한국어로 설정
+      if (!labels.containsKey(savedLang)) {
+        savedLang = 'ko';
       }
 
       setState(() {
         uiLabels = labels;
-        detectedLang = lang;
+        detectedLang = savedLang;
         labelsLoaded = true;
-        selectedLang = lang; // 앱 내 언어 선택도 동기화
+        selectedLang = savedLang; // 앱 내 언어 선택도 동기화
       });
     } catch (e) {
       logger.e('Error loading labels: $e');
@@ -476,8 +480,12 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                               ),
                             )
                             .toList(),
-                    onChanged: (value) {
+                    onChanged: (value) async {
                       if (value != null) {
+                        // SharedPreferences에 언어 설정 저장
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('selected_language', value);
+
                         setState(() {
                           selectedLang = value;
                           detectedLang = value;
@@ -642,98 +650,98 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
 
 class CardModel {
   final int id;
-  final String? title_ko, story_ko, q1_ko, q2_ko;
-  final String? title_en, story_en, q1_en, q2_en;
-  final String? title_ja, story_ja, q1_ja, q2_ja;
-  final String? title_zh, story_zh, q1_zh, q2_zh;
-  final String? title_es, story_es, q1_es, q2_es;
+  final String? titleKo, storyKo, q1Ko, q2Ko;
+  final String? titleEn, storyEn, q1En, q2En;
+  final String? titleJa, storyJa, q1Ja, q2Ja;
+  final String? titleZh, storyZh, q1Zh, q2Zh;
+  final String? titleEs, storyEs, q1Es, q2Es;
 
   CardModel({
     required this.id,
-    this.title_ko,
-    this.story_ko,
-    this.q1_ko,
-    this.q2_ko,
-    this.title_en,
-    this.story_en,
-    this.q1_en,
-    this.q2_en,
-    this.title_ja,
-    this.story_ja,
-    this.q1_ja,
-    this.q2_ja,
-    this.title_zh,
-    this.story_zh,
-    this.q1_zh,
-    this.q2_zh,
-    this.title_es,
-    this.story_es,
-    this.q1_es,
-    this.q2_es,
+    this.titleKo,
+    this.storyKo,
+    this.q1Ko,
+    this.q2Ko,
+    this.titleEn,
+    this.storyEn,
+    this.q1En,
+    this.q2En,
+    this.titleJa,
+    this.storyJa,
+    this.q1Ja,
+    this.q2Ja,
+    this.titleZh,
+    this.storyZh,
+    this.q1Zh,
+    this.q2Zh,
+    this.titleEs,
+    this.storyEs,
+    this.q1Es,
+    this.q2Es,
   });
 
   factory CardModel.fromJson(Map<String, dynamic> json) {
     return CardModel(
       id: json['id'] as int,
-      title_ko: json['title_ko']?.toString(),
-      story_ko: json['story_ko']?.toString(),
-      q1_ko: json['q1_ko']?.toString(),
-      q2_ko: json['q2_ko']?.toString(),
-      title_en: json['title_en']?.toString(),
-      story_en: json['story_en']?.toString(),
-      q1_en: json['q1_en']?.toString(),
-      q2_en: json['q2_en']?.toString(),
-      title_ja: json['title_ja']?.toString(),
-      story_ja: json['story_ja']?.toString(),
-      q1_ja: json['q1_ja']?.toString(),
-      q2_ja: json['q2_ja']?.toString(),
-      title_zh: json['title_zh']?.toString(),
-      story_zh: json['story_zh']?.toString(),
-      q1_zh: json['q1_zh']?.toString(),
-      q2_zh: json['q2_zh']?.toString(),
-      title_es: json['title_es']?.toString(),
-      story_es: json['story_es']?.toString(),
-      q1_es: json['q1_es']?.toString(),
-      q2_es: json['q2_es']?.toString(),
+      titleKo: json['title_ko']?.toString(),
+      storyKo: json['story_ko']?.toString(),
+      q1Ko: json['q1_ko']?.toString(),
+      q2Ko: json['q2_ko']?.toString(),
+      titleEn: json['title_en']?.toString(),
+      storyEn: json['story_en']?.toString(),
+      q1En: json['q1_en']?.toString(),
+      q2En: json['q2_en']?.toString(),
+      titleJa: json['title_ja']?.toString(),
+      storyJa: json['story_ja']?.toString(),
+      q1Ja: json['q1_ja']?.toString(),
+      q2Ja: json['q2_ja']?.toString(),
+      titleZh: json['title_zh']?.toString(),
+      storyZh: json['story_zh']?.toString(),
+      q1Zh: json['q1_zh']?.toString(),
+      q2Zh: json['q2_zh']?.toString(),
+      titleEs: json['title_es']?.toString(),
+      storyEs: json['story_es']?.toString(),
+      q1Es: json['q1_es']?.toString(),
+      q2Es: json['q2_es']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'title_ko': title_ko,
-    'story_ko': story_ko,
-    'q1_ko': q1_ko,
-    'q2_ko': q2_ko,
-    'title_en': title_en,
-    'story_en': story_en,
-    'q1_en': q1_en,
-    'q2_en': q2_en,
-    'title_ja': title_ja,
-    'story_ja': story_ja,
-    'q1_ja': q1_ja,
-    'q2_ja': q2_ja,
-    'title_zh': title_zh,
-    'story_zh': story_zh,
-    'q1_zh': q1_zh,
-    'q2_zh': q2_zh,
-    'title_es': title_es,
-    'story_es': story_es,
-    'q1_es': q1_es,
-    'q2_es': q2_es,
+    'title_ko': titleKo,
+    'story_ko': storyKo,
+    'q1_ko': q1Ko,
+    'q2_ko': q2Ko,
+    'title_en': titleEn,
+    'story_en': storyEn,
+    'q1_en': q1En,
+    'q2_en': q2En,
+    'title_ja': titleJa,
+    'story_ja': storyJa,
+    'q1_ja': q1Ja,
+    'q2_ja': q2Ja,
+    'title_zh': titleZh,
+    'story_zh': storyZh,
+    'q1_zh': q1Zh,
+    'q2_zh': q2Zh,
+    'title_es': titleEs,
+    'story_es': storyEs,
+    'q1_es': q1Es,
+    'q2_es': q2Es,
   };
 
   String getTitle(String langCode) {
     switch (langCode) {
       case 'ko':
-        return title_ko ?? '';
+        return titleKo ?? '';
       case 'en':
-        return title_en ?? '';
+        return titleEn ?? '';
       case 'ja':
-        return title_ja ?? '';
+        return titleJa ?? '';
       case 'zh':
-        return title_zh ?? '';
+        return titleZh ?? '';
       case 'es':
-        return title_es ?? '';
+        return titleEs ?? '';
       default:
         return '';
     }
@@ -742,15 +750,15 @@ class CardModel {
   String getStory(String langCode) {
     switch (langCode) {
       case 'ko':
-        return story_ko ?? '';
+        return storyKo ?? '';
       case 'en':
-        return story_en ?? '';
+        return storyEn ?? '';
       case 'ja':
-        return story_ja ?? '';
+        return storyJa ?? '';
       case 'zh':
-        return story_zh ?? '';
+        return storyZh ?? '';
       case 'es':
-        return story_es ?? '';
+        return storyEs ?? '';
       default:
         return '';
     }
@@ -761,24 +769,24 @@ class CardModel {
     String? q2;
     switch (langCode) {
       case 'ko':
-        q1 = q1_ko;
-        q2 = q2_ko;
+        q1 = q1Ko;
+        q2 = q2Ko;
         break;
       case 'en':
-        q1 = q1_en;
-        q2 = q2_en;
+        q1 = q1En;
+        q2 = q2En;
         break;
       case 'ja':
-        q1 = q1_ja;
-        q2 = q2_ja;
+        q1 = q1Ja;
+        q2 = q2Ja;
         break;
       case 'zh':
-        q1 = q1_zh;
-        q2 = q2_zh;
+        q1 = q1Zh;
+        q2 = q2Zh;
         break;
       case 'es':
-        q1 = q1_es;
-        q2 = q2_es;
+        q1 = q1Es;
+        q2 = q2Es;
         break;
       default:
         q1 = null;

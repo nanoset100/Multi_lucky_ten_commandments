@@ -190,21 +190,20 @@ class _ReminderSettingPageState extends State<ReminderSettingPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 디버그 정보 (개발 중에만 사용, 나중에 제거)
-                if (false) // 개발 중에만 true로 변경
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: Colors.amber.withValues(alpha: 0.2),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('현재 선택된 언어: $selectedLang'),
-                        Text('레이블 로드 여부: ${uiLabels != null}'),
-                        if (uiLabels != null)
-                          Text('지원 언어: ${uiLabels!.keys.toList()}'),
-                      ],
-                    ),
-                  ),
+                // 디버그 정보가 필요한 경우 아래 주석을 해제하고 사용
+                // Container(
+                //   padding: const EdgeInsets.all(8),
+                //   color: Colors.amber.withValues(alpha: 0.2),
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       Text('현재 선택된 언어: $selectedLang'),
+                //       Text('레이블 로드 여부: ${uiLabels != null}'),
+                //       if (uiLabels != null)
+                //         Text('지원 언어: ${uiLabels!.keys.toList()}'),
+                //     ],
+                //   ),
+                // ),
                 Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(

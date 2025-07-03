@@ -35,7 +35,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace "com.nanoset.luckyten"
-    compileSdkVersion flutter.compileSdkVersion
+    compileSdkVersion 35
     ndkVersion "27.0.12077973"
 
     compileOptions {
@@ -54,7 +54,7 @@ android {
     defaultConfig {
         applicationId "com.nanoset.luckyten"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
