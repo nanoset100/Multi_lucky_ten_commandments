@@ -1,0 +1,41 @@
+workflows:
+  ios-release:
+    name: iOS Release
+    max_build_duration: 60
+    integrations:
+      app_store_connect: LuckyTenAPI    # integrations 위치 (environment 안에 넣으면 오류!)
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.nanoset.luckyten
+      groups:
+        - lucky10                        # Codemagic 환경변수 그룹명
+      vars:
+        BUNDLE_ID: "com.nanoset.luckyten"
+
+    scripts:
+      - name: .env 파일 생성
+        script: |
+          echo "SUPABASE_URL=$SUPABASE_URL" > .env
+          echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
+
+      - name: Flutter pub get
+        script: flutter pub get
+
+      - name: Xcode 서명 설정 적용
+        script: xcode-project use-profiles
+
+      - name: Flutter build IPA
+        script: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
