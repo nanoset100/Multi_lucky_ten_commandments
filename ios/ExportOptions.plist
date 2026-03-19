@@ -12,8 +12,8 @@
     <true/>
     <key>provisioningProfiles</key>
     <dict>
-        <key>com.nanoset.luckyten</key>
-        <string>luckyten_appstore</string>
+        <key>com.nanoset.fortune10</key>
+        <string>Lucky10App_Prod_Profile</string>
     </dict>
 </dict>
 </plist>

@@ -10,11 +10,11 @@ workflows:
       cocoapods: default
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.nanoset.luckyten
+        bundle_identifier: com.nanoset.fortune10
       groups:
         - lucky10                        # Codemagic 환경변수 그룹명
       vars:
-        BUNDLE_ID: "com.nanoset.luckyten"
+        BUNDLE_ID: "com.nanoset.fortune10"
 
     scripts:
       - name: .env 파일 생성
