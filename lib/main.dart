@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'reminder_service.dart';
 import 'reminder_setting_page.dart';
 import 'community_memo_page.dart';
+import 'notification_service.dart';
 
 /// 앱에서 지원하는 언어 코드와 표시 이름을 담은 Map
 final Map<String, String> supportedLanguages = {
@@ -36,6 +37,10 @@ void main() async {
     // ReminderService 초기화
     await ReminderService.instance.init();
     logger.i('ReminderService initialized successfully');
+
+    // 매일 오전 9시 알림 예약
+    await NotificationService.init();
+    logger.i('NotificationService initialized successfully');
   } catch (e) {
     logger.e('초기화 중 오류 발생: $e');
   }
@@ -50,7 +55,6 @@ class LuckyTenCommandmentsApp extends StatelessWidget {
     return MaterialApp(
       title: '행운의 십계명 카드',
       theme: ThemeData(primarySwatch: Colors.deepPurple, fontFamily: 'Roboto'),
-      locale: const Locale('ko', 'KR'), // 한국어 로케일 명시적 설정
       home: const CommandmentCardPage(),
     );
   }
@@ -69,7 +73,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
   TextEditingController memoController = TextEditingController();
   List<Map<String, dynamic>> memos = [];
   bool isLoading = true;
-  String? errorMessage;
+  String? errorKey;
 
   /// 사용자가 선택한 언어 코드 (기본값: 'ko')
   String selectedLang = 'ko';
@@ -139,7 +143,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
     try {
       setState(() {
         isLoading = true;
-        errorMessage = null;
+        errorKey = null;
       });
 
       final selectFields = [
@@ -196,7 +200,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
         });
       } else {
         setState(() {
-          errorMessage = '카드를 불러올 수 없습니다.\n잠시 후 다시 시도해주세요.';
+          errorKey = 'no_cards';
           isLoading = false;
         });
         logger.w('No cards found in the response');
@@ -204,11 +208,11 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
     } catch (e) {
       setState(() {
         if (e is TimeoutException) {
-          errorMessage = '서버 연결 시간이 초과되었습니다.\n네트워크 연결을 확인하고 다시 시도해주세요.';
+          errorKey = 'error_timeout';
         } else if (e.toString().contains('connection')) {
-          errorMessage = '네트워크 연결을 확인해주세요.\n인터넷이 연결되어 있는지 확인 후 다시 시도해주세요.';
+          errorKey = 'error_network';
         } else {
-          errorMessage = '오류가 발생했습니다.\n잠시 후 다시 시도해주세요.';
+          errorKey = 'error_general';
         }
         isLoading = false;
       });
@@ -373,7 +377,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
       );
     }
 
-    if (errorMessage != null) {
+    if (errorKey != null) {
       return Scaffold(
         backgroundColor: const Color(0xffdcd0f7),
         body: Center(
@@ -385,7 +389,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  errorMessage!,
+                  labels[errorKey] ?? labels['error_general'] ?? '오류가 발생했습니다.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 16),
                 ),
@@ -443,20 +447,6 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               );
             },
             tooltip: '나의 십계명 기록',
-          ),
-          IconButton(
-            icon: const Icon(Icons.forum),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          CommunityMemoPage(selectedLanguage: selectedLang),
-                ),
-              );
-            },
-            tooltip: '커뮤니티 메모',
           ),
         ],
       ),
@@ -557,13 +547,36 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
               ),
               const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final memoText = memoController.text.trim();
                   if (memoText.isNotEmpty && _cards.isNotEmpty) {
                     final cardId = _cards[_currentCardIndex].id;
-                    saveMemo().then((_) {
-                      saveMemoAndShare(memoText, cardId);
-                    });
+                    await saveMemo();
+                    if (!mounted) return;
+                    final share = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        content: Text(
+                          labels['share_confirm'] ?? '커뮤니티에도 공유할까요?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text(labels['no'] ?? '아니요'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(
+                              labels['share'] ?? '공유',
+                              style: const TextStyle(color: Colors.deepPurple),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (share == true && mounted) {
+                      await saveMemoAndShare(memoText, cardId);
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(

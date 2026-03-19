@@ -37,6 +37,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_dotenv: ^5.2.1
   logger: ^2.5.0
+  flutter_local_notifications: ^18.0.0
+  timezone: ^0.9.4
+  flutter_timezone: ^1.0.4
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
@@ -108,8 +112,8 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/images/app_icon.png"
-    background_color: "#hexcode"
-    theme_color: "#hexcode"
+    background_color: "#dcd0f7"
+    theme_color: "#dcd0f7"
   windows:
     generate: true
     image_path: "assets/images/app_icon.png"
