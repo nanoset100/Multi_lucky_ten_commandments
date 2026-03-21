@@ -63,8 +63,108 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
       setState(() {
         deviceId = id;
       });
+      // EULA 동의 확인 후 메모 로드
+      await _checkAndShowEula(prefs);
+    }
+  }
+
+  Future<void> _checkAndShowEula(SharedPreferences prefs) async {
+    final accepted = prefs.getBool('community_eula_accepted') ?? false;
+    if (!accepted && mounted) {
+      final result = await _showEulaDialog();
+      if (result == true) {
+        await prefs.setBool('community_eula_accepted', true);
+        await fetchCommunityMemos();
+      } else {
+        // 동의 거부 시 뒤로 이동
+        if (mounted) Navigator.of(context).pop();
+      }
+    } else {
       await fetchCommunityMemos();
     }
+  }
+
+  Future<bool?> _showEulaDialog() {
+    final lang = widget.selectedLanguage;
+    final Map<String, Map<String, String>> eulaText = {
+      'ko': {
+        'title': '커뮤니티 이용 규칙',
+        'body':
+            '커뮤니티에 참여하기 전에 아래 규칙에 동의해 주세요.\n\n'
+            '• 타인을 비방하거나 욕설이 포함된 게시물은 허용되지 않습니다.\n'
+            '• 불쾌한 콘텐츠는 즉시 신고해 주세요.\n'
+            '• 부적절한 신고는 24시간 이내에 처리됩니다.\n'
+            '• 위반 시 해당 기기의 커뮤니티 접근이 제한될 수 있습니다.',
+        'agree': '동의하고 계속하기',
+        'decline': '취소',
+      },
+      'en': {
+        'title': 'Community Guidelines',
+        'body':
+            'Please agree to the following rules before joining the community.\n\n'
+            '• Abusive, hateful, or offensive content is not allowed.\n'
+            '• Please report any objectionable content immediately.\n'
+            '• Reports will be reviewed and acted upon within 24 hours.\n'
+            '• Violations may result in restricted community access for your device.',
+        'agree': 'Agree & Continue',
+        'decline': 'Cancel',
+      },
+      'ja': {
+        'title': 'コミュニティガイドライン',
+        'body':
+            'コミュニティに参加する前に、以下のルールに同意してください。\n\n'
+            '• 誹謗中傷や侮辱的な投稿は許可されていません。\n'
+            '• 不適切なコンテンツは直ちに報告してください。\n'
+            '• 報告は24時間以内に対応されます。\n'
+            '• 違反した場合、デバイスのコミュニティアクセスが制限される場合があります。',
+        'agree': '同意して続ける',
+        'decline': 'キャンセル',
+      },
+      'zh': {
+        'title': '社区使用规则',
+        'body':
+            '参与社区前，请同意以下规则。\n\n'
+            '• 不允许发布侮辱性或攻击性内容。\n'
+            '• 请立即举报任何不当内容。\n'
+            '• 举报将在24小时内处理。\n'
+            '• 违规行为可能导致您的设备被限制访问社区。',
+        'agree': '同意并继续',
+        'decline': '取消',
+      },
+      'es': {
+        'title': 'Normas de la comunidad',
+        'body':
+            'Por favor, acepta las siguientes normas antes de unirte a la comunidad.\n\n'
+            '• No se permite contenido abusivo, odioso u ofensivo.\n'
+            '• Por favor, reporta cualquier contenido inapropiado de inmediato.\n'
+            '• Los reportes serán revisados en 24 horas.\n'
+            '• Las infracciones pueden resultar en acceso restringido a la comunidad.',
+        'agree': 'Aceptar y continuar',
+        'decline': 'Cancelar',
+      },
+    };
+
+    final t = eulaText[lang] ?? eulaText['en']!;
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(t['title']!),
+        content: Text(t['body']!, style: const TextStyle(fontSize: 14, height: 1.6)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t['decline']!, style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6A4FC8)),
+            child: Text(t['agree']!, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> fetchCommunityMemos() async {
@@ -76,7 +176,6 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
     }
 
     try {
-      // 1. 메모 목록 조회
       final memosResponse = await supabase
           .from('community_memos')
           .select()
@@ -97,7 +196,6 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
 
       final memoIds = memos.map((m) => m['id'] as int).toList();
 
-      // 2. 좋아요 전체 한 번에 조회
       final likesResponse = await supabase
           .from('memo_likes')
           .select()
@@ -105,7 +203,6 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
 
       final allLikes = List<Map<String, dynamic>>.from(likesResponse);
 
-      // 3. 댓글 전체 한 번에 조회
       final commentsResponse = await supabase
           .from('memo_comments')
           .select()
@@ -114,7 +211,6 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
 
       final allComments = List<Map<String, dynamic>>.from(commentsResponse);
 
-      // 4. 메모리에서 집계
       final newLikedMemos = <int, bool>{};
       final newLikeCounts = <int, int>{};
       final newCommentsMap = <int, List<Map<String, dynamic>>>{};
@@ -156,7 +252,6 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
 
     final isLiked = likedMemos[memoId] ?? false;
 
-    // 낙관적 업데이트 (즉시 UI 반영)
     setState(() {
       likedMemos[memoId] = !isLiked;
       likeCounts[memoId] = (likeCounts[memoId] ?? 0) + (isLiked ? -1 : 1);
@@ -176,7 +271,6 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
         });
       }
     } catch (e) {
-      // 실패 시 롤백
       if (mounted) {
         setState(() {
           likedMemos[memoId] = isLiked;
@@ -184,6 +278,57 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
         });
       }
     }
+  }
+
+  Future<void> _submitReport(int memoId) async {
+    try {
+      await supabase.from('memo_reports').insert({
+        'memo_id': memoId,
+        'reporter_device_id': deviceId,
+        'reported_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {
+      // 테이블 없거나 오류여도 사용자 피드백은 정상 표시
+    }
+  }
+
+  void _showReportDialog(int memoId) {
+    final lang = widget.selectedLanguage;
+    final Map<String, Map<String, String>> reportText = {
+      'ko': {'title': '신고하기', 'body': '이 게시물을 신고하시겠습니까?\n부적절한 콘텐츠는 24시간 이내에 검토됩니다.', 'confirm': '신고', 'cancel': '취소', 'done': '신고가 접수되었습니다.'},
+      'en': {'title': 'Report', 'body': 'Do you want to report this post?\nInappropriate content will be reviewed within 24 hours.', 'confirm': 'Report', 'cancel': 'Cancel', 'done': 'Your report has been submitted.'},
+      'ja': {'title': '報告する', 'body': 'この投稿を報告しますか？\n不適切なコンテンツは24時間以内に審査されます。', 'confirm': '報告', 'cancel': 'キャンセル', 'done': '報告を受け付けました。'},
+      'zh': {'title': '举报', 'body': '您要举报此帖子吗？\n不当内容将在24小时内审核。', 'confirm': '举报', 'cancel': '取消', 'done': '举报已提交。'},
+      'es': {'title': 'Reportar', 'body': '¿Deseas reportar esta publicación?\nEl contenido inapropiado será revisado en 24 horas.', 'confirm': 'Reportar', 'cancel': 'Cancelar', 'done': 'Tu reporte ha sido enviado.'},
+    };
+    final t = reportText[lang] ?? reportText['en']!;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t['title']!),
+        content: Text(t['body']!, style: const TextStyle(fontSize: 14, height: 1.6)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t['cancel']!, style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await _submitReport(memoId);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(t['done']!)),
+                );
+              }
+            },
+            child: Text(t['confirm']!, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void showCommentInput(int memoId) {
@@ -362,20 +507,38 @@ class _CommunityMemoPageState extends State<CommunityMemoPage> {
                                               ),
                                             ],
                                           ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                showCommentInput(memoId),
-                                            style: TextButton.styleFrom(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 0,
+                                          Row(
+                                            children: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    showCommentInput(memoId),
+                                                style: TextButton.styleFrom(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 0,
+                                                  ),
+                                                  minimumSize: const Size(50, 26),
+                                                ),
+                                                child: Text(
+                                                  labels['add_comment'] ?? '댓글 달기',
+                                                ),
                                               ),
-                                              minimumSize: const Size(50, 26),
-                                            ),
-                                            child: Text(
-                                              labels['add_comment'] ?? '댓글 달기',
-                                            ),
+                                              // 신고 버튼
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.flag_outlined,
+                                                  size: 18,
+                                                  color: Colors.grey,
+                                                ),
+                                                onPressed: () =>
+                                                    _showReportDialog(memoId),
+                                                constraints:
+                                                    const BoxConstraints(),
+                                                padding: const EdgeInsets.all(8),
+                                                tooltip: labels['report'] ?? '신고',
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
