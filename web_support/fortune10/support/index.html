@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support – 매일 행운 십계명 / Daily Lucky Ten Commandments</title>
+  <style>
+    :root {
+      --gold: #c9a227;
+      --green: #1a5c2a;
+      --bg: #faf8f2;
+      --text: #2c2c2c;
+      --muted: #666;
+      --border: #e2d9c3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* Header */
+    header {
+      background: var(--green);
+      color: #fff;
+      padding: 2.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+    header .icon {
+      width: 80px; height: 80px;
+      border-radius: 20px;
+      border: 3px solid var(--gold);
+      margin: 0 auto 1rem;
+      display: block;
+      background: #fff;
+      object-fit: contain;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: .25rem; }
+    header p  { font-size: .95rem; opacity: .85; }
+
+    /* Lang tabs */
+    .lang-nav {
+      display: flex;
+      justify-content: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+      padding: 1.2rem 1rem;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+    .lang-nav button {
+      padding: .4rem .9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: none;
+      cursor: pointer;
+      font-size: .88rem;
+      transition: all .2s;
+    }
+    .lang-nav button.active,
+    .lang-nav button:hover {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+    }
+
+    /* Main content */
+    main { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    section { margin-bottom: 2.2rem; }
+    section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--green);
+      border-left: 4px solid var(--gold);
+      padding-left: .75rem;
+      margin-bottom: 1rem;
+    }
+    section p { color: var(--text); margin-bottom: .6rem; }
+
+    /* FAQ */
+    details {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: .6rem;
+      overflow: hidden;
+    }
+    details summary {
+      padding: .85rem 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      background: #fff;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    details summary::after { content: '＋'; color: var(--gold); font-size: 1.1rem; }
+    details[open] summary::after { content: '－'; }
+    details .answer {
+      padding: .85rem 1rem 1rem;
+      background: #fdfcf8;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-size: .95rem;
+    }
+
+    /* Contact */
+    .contact-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: box-shadow .2s;
+    }
+    .contact-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+    .contact-card .icon-wrap {
+      width: 44px; height: 44px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .contact-card strong { display: block; font-weight: 700; }
+    .contact-card span   { font-size: .88rem; color: var(--muted); }
+
+    footer {
+      text-align: center;
+      font-size: .8rem;
+      color: var(--muted);
+      padding: 2rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* language sections */
+    .lang-section { display: none; }
+    .lang-section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img class="icon" src="../../../assets/images/app_icon.png"
+       onerror="this.style.display='none'" alt="App Icon" />
+  <h1>매일 행운 십계명</h1>
+  <p>Daily Lucky Ten Commandments &nbsp;·&nbsp; Support</p>
+</header>
+
+<nav class="lang-nav" aria-label="Language">
+  <button class="active" onclick="setLang('ko')">🇰🇷 한국어</button>
+  <button onclick="setLang('en')">🇺🇸 English</button>
+  <button onclick="setLang('ja')">🇯🇵 日本語</button>
+  <button onclick="setLang('zh')">🇨🇳 中文</button>
+  <button onclick="setLang('es')">🇪🇸 Español</button>
+</nav>
+
+<main>
+
+  <!-- ==================== KOREAN ==================== -->
+  <div class="lang-section active" id="lang-ko">
+
+    <section>
+      <h2>앱 소개</h2>
+      <p>
+        <strong>매일 행운 십계명</strong>은 매일 새로운 영감 카드를 제공하여
+        마음의 성장과 긍정적인 삶의 방향을 돕는 앱입니다.<br>
+        개인 메모 작성, 커뮤니티 공유, 스트릭 추적, 알림 설정 등의 기능을 포함합니다.
+      </p>
+    </section>
+
+    <section>
+      <h2>자주 묻는 질문 (FAQ)</h2>
+
+      <details>
+        <summary>카드가 로딩되지 않아요.</summary>
+        <div class="answer">
+          인터넷 연결 상태를 확인해 주세요. 연결 후에도 문제가 지속되면 앱을 완전히 종료 후 다시 실행하거나,
+          화면의 <em>다시 시도</em> 버튼을 탭하세요.
+        </div>
+      </details>
+
+      <details>
+        <summary>알림이 오지 않아요.</summary>
+        <div class="answer">
+          스마트폰 설정 &gt; 앱 권한에서 <strong>매일 행운 십계명</strong>의 알림 권한이 허용되어 있는지 확인해 주세요.
+          배터리 절약 모드나 방해금지 모드가 활성화된 경우 알림이 차단될 수 있습니다.
+        </div>
+      </details>
+
+      <details>
+        <summary>연속 접속일(스트릭)이 초기화됐어요.</summary>
+        <div class="answer">
+          스트릭은 하루라도 앱 접속이 없으면 0으로 초기화됩니다. 매일 한 번 앱을 열어 카드를 확인해 주세요.
+        </div>
+      </details>
+
+      <details>
+        <summary>메모가 저장되지 않아요.</summary>
+        <div class="answer">
+          메모 저장 시 인터넷 연결이 필요합니다. 연결 상태를 확인 후 다시 시도해 주세요.
+          문제가 계속되면 아래 이메일로 문의해 주세요.
+        </div>
+      </details>
+
+      <details>
+        <summary>데이터 삭제 / 계정 탈퇴는 어떻게 하나요?</summary>
+        <div class="answer">
+          아래 이메일로 삭제 요청을 보내 주시면 영업일 기준 3일 이내에 처리해 드립니다.
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>문의하기</h2>
+      <a class="contact-card" href="mailto:nanoset@naver.com">
+        <div class="icon-wrap">✉️</div>
+        <div>
+          <strong>이메일 문의</strong>
+          <span>nanoset@naver.com</span>
+        </div>
+      </a>
+    </section>
+
+  </div><!-- /lang-ko -->
+
+
+  <!-- ==================== ENGLISH ==================== -->
+  <div class="lang-section" id="lang-en">
+
+    <section>
+      <h2>About the App</h2>
+      <p>
+        <strong>Daily Lucky Ten Commandments</strong> delivers a fresh inspiration card every day to support
+        your personal growth and positive mindset.<br>
+        Features include personal memos, community sharing, streak tracking, and daily reminders.
+      </p>
+    </section>
+
+    <section>
+      <h2>FAQ</h2>
+
+      <details>
+        <summary>Cards are not loading.</summary>
+        <div class="answer">
+          Please check your internet connection. If the issue persists, fully close the app and reopen it,
+          or tap the <em>Retry</em> button on screen.
+        </div>
+      </details>
+
+      <details>
+        <summary>I'm not receiving notifications.</summary>
+        <div class="answer">
+          Go to your phone's Settings &gt; App Permissions and make sure notifications are enabled for
+          <strong>Daily Lucky Ten Commandments</strong>. Battery saver or Do Not Disturb modes may block alerts.
+        </div>
+      </details>
+
+      <details>
+        <summary>My streak was reset.</summary>
+        <div class="answer">
+          Streaks reset to 0 if you miss a day. Open the app at least once each day to keep your streak going.
+        </div>
+      </details>
+
+      <details>
+        <summary>My memo won't save.</summary>
+        <div class="answer">
+          An active internet connection is required to save memos. Please check your connection and try again.
+          If the problem continues, contact us at the email below.
+        </div>
+      </details>
+
+      <details>
+        <summary>How do I delete my data or account?</summary>
+        <div class="answer">
+          Send a deletion request to our support email and we'll process it within 3 business days.
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Contact Us</h2>
+      <a class="contact-card" href="mailto:nanoset@naver.com">
+        <div class="icon-wrap">✉️</div>
+        <div>
+          <strong>Email Support</strong>
+          <span>nanoset@naver.com</span>
+        </div>
+      </a>
+    </section>
+
+  </div><!-- /lang-en -->
+
+
+  <!-- ==================== JAPANESE ==================== -->
+  <div class="lang-section" id="lang-ja">
+
+    <section>
+      <h2>アプリについて</h2>
+      <p>
+        <strong>毎日幸運の十戒</strong>は、毎日新しいインスピレーションカードを届け、
+        心の成長とポジティブな生き方をサポートするアプリです。<br>
+        個人メモ、コミュニティ共有、連続記録、リマインダー設定などの機能を備えています。
+      </p>
+    </section>
+
+    <section>
+      <h2>よくある質問</h2>
+
+      <details>
+        <summary>カードが読み込まれません。</summary>
+        <div class="answer">
+          インターネット接続をご確認ください。問題が続く場合は、アプリを完全に終了して再起動するか、
+          画面の<em>再試行</em>ボタンをタップしてください。
+        </div>
+      </details>
+
+      <details>
+        <summary>通知が届きません。</summary>
+        <div class="answer">
+          スマートフォンの設定 &gt; アプリの権限から、<strong>毎日幸運の十戒</strong>の通知が許可されているかご確認ください。
+          省電力モードやおやすみモードが有効な場合、通知がブロックされることがあります。
+        </div>
+      </details>
+
+      <details>
+        <summary>連続記録がリセットされました。</summary>
+        <div class="answer">
+          1日でもアプリを開かない日があると、連続記録は0にリセットされます。毎日1回アプリを開いてカードを確認してください。
+        </div>
+      </details>
+
+      <details>
+        <summary>データの削除・退会はどうすればいいですか？</summary>
+        <div class="answer">
+          下記メールアドレスに削除リクエストをお送りください。営業日3日以内に対応いたします。
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>お問い合わせ</h2>
+      <a class="contact-card" href="mailto:nanoset@naver.com">
+        <div class="icon-wrap">✉️</div>
+        <div>
+          <strong>メールサポート</strong>
+          <span>nanoset@naver.com</span>
+        </div>
+      </a>
+    </section>
+
+  </div><!-- /lang-ja -->
+
+
+  <!-- ==================== CHINESE ==================== -->
+  <div class="lang-section" id="lang-zh">
+
+    <section>
+      <h2>关于应用</h2>
+      <p>
+        <strong>每日幸运十诫</strong>每天为您提供全新的励志卡片，帮助您实现个人成长与积极生活。<br>
+        功能包括：个人备忘录、社区分享、连续签到记录和每日提醒。
+      </p>
+    </section>
+
+    <section>
+      <h2>常见问题</h2>
+
+      <details>
+        <summary>卡片无法加载。</summary>
+        <div class="answer">
+          请检查您的网络连接。如问题持续，请完全关闭应用后重新启动，或点击屏幕上的<em>重试</em>按钮。
+        </div>
+      </details>
+
+      <details>
+        <summary>收不到通知。</summary>
+        <div class="answer">
+          请前往手机设置 &gt; 应用权限，确认已为<strong>每日幸运十诫</strong>开启通知权限。
+          省电模式或勿扰模式可能会屏蔽通知。
+        </div>
+      </details>
+
+      <details>
+        <summary>如何删除数据或注销账号？</summary>
+        <div class="answer">
+          请发送删除请求至以下邮箱，我们将在3个工作日内处理。
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>联系我们</h2>
+      <a class="contact-card" href="mailto:nanoset@naver.com">
+        <div class="icon-wrap">✉️</div>
+        <div>
+          <strong>邮件支持</strong>
+          <span>nanoset@naver.com</span>
+        </div>
+      </a>
+    </section>
+
+  </div><!-- /lang-zh -->
+
+
+  <!-- ==================== SPANISH ==================== -->
+  <div class="lang-section" id="lang-es">
+
+    <section>
+      <h2>Acerca de la app</h2>
+      <p>
+        <strong>Los Diez Mandamientos de la Suerte</strong> te ofrece una nueva tarjeta de inspiración cada día
+        para apoyar tu crecimiento personal y mentalidad positiva.<br>
+        Incluye notas personales, comunidad, racha de días y recordatorios diarios.
+      </p>
+    </section>
+
+    <section>
+      <h2>Preguntas frecuentes</h2>
+
+      <details>
+        <summary>Las tarjetas no cargan.</summary>
+        <div class="answer">
+          Verifica tu conexión a internet. Si el problema persiste, cierra la app completamente y vuelve a abrirla,
+          o pulsa el botón <em>Reintentar</em>.
+        </div>
+      </details>
+
+      <details>
+        <summary>No recibo notificaciones.</summary>
+        <div class="answer">
+          Ve a Configuración &gt; Permisos de apps y asegúrate de que las notificaciones estén activadas para
+          <strong>Los Diez Mandamientos de la Suerte</strong>. El modo ahorro de batería o No molestar puede bloquearlas.
+        </div>
+      </details>
+
+      <details>
+        <summary>¿Cómo elimino mis datos o cuenta?</summary>
+        <div class="answer">
+          Envía una solicitud de eliminación al correo de soporte y lo procesaremos en 3 días hábiles.
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Contacto</h2>
+      <a class="contact-card" href="mailto:nanoset@naver.com">
+        <div class="icon-wrap">✉️</div>
+        <div>
+          <strong>Soporte por correo</strong>
+          <span>nanoset@naver.com</span>
+        </div>
+      </a>
+    </section>
+
+  </div><!-- /lang-es -->
+
+</main>
+
+<footer>
+  © 2025 NanoSet. All rights reserved. &nbsp;·&nbsp;
+  <a href="https://www.nanoset.com/fortune10" style="color:var(--gold)">nanoset.com/fortune10</a>
+</footer>
+
+<script>
+  function setLang(lang) {
+    document.querySelectorAll('.lang-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.lang-nav button').forEach(el => el.classList.remove('active'));
+    document.getElementById('lang-' + lang).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+</script>
+
+</body>
+</html>

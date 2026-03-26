@@ -244,6 +244,22 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
   Future<void> saveMemoAndShare(String content, int cardId) async {
     final timestamp = DateTime.now().toIso8601String();
     final prefs = await SharedPreferences.getInstance();
+    final String? deviceId = prefs.getString('device_id');
+
+    // 0. 비속어 체크
+    final profanityKeywords = ['시발', '미친', '병신', 'fuck', 'shit', 'asshole'];
+    if (profanityKeywords.any((word) => content.toLowerCase().contains(word))) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              uiLabels?[selectedLang]?['profanity_warning'] ?? '부적절한 표현이 포함되어 있습니다.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
 
     // 1. 로컬 저장
     await prefs.setString('memo_$cardId', content);
@@ -255,6 +271,7 @@ class _CommandmentCardPageState extends State<CommandmentCardPage> {
       'card_id': cardId,
       'source': '행운십계명',
       'language': selectedLang,
+      'author_device_id': deviceId,
     });
 
     // 알림
